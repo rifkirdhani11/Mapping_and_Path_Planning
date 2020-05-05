@@ -1,2 +1,2 @@
 # Mapping_and_Path_Planning
-ROBOTANI
+Development of ROBOTANI project. ROBOTANI : Planting Path Planning and Mapping System Software is a software system used to manage image and location data that have been obtained from aerial data collection on agricultural land. The output of this software is a high-resolution map image along with GPS-based location and planting path in the form of coordinates based on GPS location. For further information read ROBOTANI_Software_Manual_Guide.pdf
