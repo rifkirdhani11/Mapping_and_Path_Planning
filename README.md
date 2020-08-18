@@ -4,15 +4,17 @@ ROBOTANI : Planting Path Planning and Mapping System Software is a software syst
 
 ## Software Requirements
 
-Windows	Docker-Toolbox
-	Oracle VM VirtualBox
-	Kinematic Alpha
-	OSGeo4W64 (GDAL)
-	Git Bash
-	Visual Studio Code
-Linux	Docker
-	Terminal
-	Visual Studio Code
+### Windows	
+Docker-Toolbox
+Oracle VM VirtualBox
+Kinematic Alpha
+OSGeo4W64 (GDAL)
+Git Bash
+Visual Studio Code
+### Linux
+Docker
+Terminal
+Visual Studio Code
 
 ## Operation
 
