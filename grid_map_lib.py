@@ -36,6 +36,8 @@ class GridMap:
                             (self.width / 2.0) * self.resolution
         self.left_lower_y = self.center_y - \
                             (self.height / 2.0) * self.resolution
+        #print("init : left_lower\n")
+        #print(self.left_lower_x, self.left_lower_y)
 
         self.ndata = self.width * self.height
         self.data = [init_val] * self.ndata
@@ -53,6 +55,8 @@ class GridMap:
 
         if 0 <= grid_ind <= self.ndata:
             return self.data[grid_ind]
+            print("get_value_from_xy_index : data[grid_ind]\n")
+            print(self.data[grid_ind])
         else:
             return None
 
@@ -66,6 +70,9 @@ class GridMap:
             x_pos, self.left_lower_x, self.width)
         y_ind = self.calc_xy_index_from_position(
             y_pos, self.left_lower_y, self.height)
+
+        print("get_xy_index_from_xy_pos : xind, yind\n")
+        print(x_ind, y_ind)
 
         return x_ind, y_ind
 
@@ -85,6 +92,8 @@ class GridMap:
             return False  # NG
 
         flag = self.set_value_from_xy_index(x_ind, y_ind, val)
+        print("set_value_from_xy_pos : flag\n")
+        print(flag)
 
         return flag
 
@@ -213,7 +222,7 @@ class GridMap:
             fig, ax = plt.subplots()
         heat_map = ax.pcolor(grid_data, cmap="Blues", vmin=0.0, vmax=1.0)
         plt.axis("equal")
-        # plt.show()
+        #plt.show()
 
         return heat_map
 

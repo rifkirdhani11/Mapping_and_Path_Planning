@@ -16,7 +16,8 @@ import numpy as np
 from grid_map_lib import GridMap
 
 do_animation = True
-
+turning = 0
+#turn=0
 def plot_robot(pose, params):
 	r = params.sensor_range_m
 	plt.plot([pose[0]-r*np.cos(pose[2]), pose[0]+r*np.cos(pose[2])],
@@ -25,10 +26,10 @@ def plot_robot(pose, params):
 			 [pose[1]-r*np.sin(pose[2]+np.pi/2), pose[1]+r*np.sin(pose[2]+np.pi/2)], '--', color='b')
 	plt.plot(pose[0], pose[1], 'ro', markersize=5)
 	plt.arrow(pose[0], pose[1], 0.05 * np.cos(pose[2]), 0.05 * np.sin(pose[2]),
-			  head_length=0.1, head_width=0.1)
+			  head_length=10, head_width=10)
 
 def visualize(traj, pose, params):
-	plt.plot(traj[:,0], traj[:,1], 'g')
+	plt.plot(traj[:,0], traj[:,1], ':g')
 	plot_robot(pose, params)
 	plt.legend()
 
@@ -58,12 +59,12 @@ class Params:
 		self.numiters = 1000
 		self.animate = 1
 		self.dt = 0.1
-		self.goal_tol = 0.15
-		self.max_vel = 0.5 # m/s
+		self.goal_tol = 1.5
+		self.max_vel = 22 # m/s
 		self.min_vel = 0.1 # m/s
-		self.sensor_range_m = 0.3 # m
+		self.sensor_range_m = 10 # m
 		self.time_to_switch_goal = 5.0 # sec
-		#self.sweep_resolution = 15 #0.25 # m
+		self.sweep_resolution = 3.5 # m
 
 class SweepSearcher:
 	class SweepDirection(IntEnum):
@@ -81,6 +82,9 @@ class SweepSearcher:
 		self.update_turning_window()
 		self.xinds_goaly = xinds_goaly
 		self.goaly = goaly
+		#len(self.ox)
+		self.swapDir = 0
+		self.turning = 0
 
 	def move_target_grid(self, cxind, cyind, gmap):
 		nxind = self.moving_direction + cxind
@@ -95,6 +99,7 @@ class SweepSearcher:
 				# moving backward
 				ncxind = -self.moving_direction + cxind
 				ncyind = cyind
+				
 				if gmap.check_occupied_from_xy_index(ncxind, ncyind):
 					# moved backward, but the grid is occupied by obstacle
 					return None, None
@@ -104,6 +109,7 @@ class SweepSearcher:
 					ncxind += self.moving_direction
 				self.swap_moving_direction()
 			return ncxind, ncyind
+		#print(turn)
 
 	def find_safe_turning_grid(self, cxind, cyind, gmap):
 
@@ -114,7 +120,7 @@ class SweepSearcher:
 
 			# found safe grid
 			if not gmap.check_occupied_from_xy_index(nxind, nyind, occupied_val=0.5):
-				return nxind, nyind
+				return nxind, nyind	
 
 		return None, None
 
@@ -135,8 +141,12 @@ class SweepSearcher:
 		]
 
 	def swap_moving_direction(self):
+		global turning
 		self.moving_direction *= -1
 		self.update_turning_window()
+		self.swapDir += 1
+		turning += 2
+		
 
 	def search_start_grid(self, grid_map):
 		xinds = []
@@ -147,12 +157,11 @@ class SweepSearcher:
 			xinds, y_ind = search_free_grid_index_at_edge_y(grid_map, from_upper=False)
 
 		if self.moving_direction == self.MovingDirection.RIGHT:
-			return min(xinds), y_ind
+			return min(xinds), y_ind#, self.turning
 		elif self.moving_direction == self.MovingDirection.LEFT:
-			return max(xinds), y_ind
+			return max(xinds), y_ind#, self.turning
 
 		raise ValueError("self.moving direction is invalid ")
-
 
 def find_sweep_direction_and_start_posi(ox, oy):
 	# find sweep_direction
@@ -168,21 +177,44 @@ def find_sweep_direction_and_start_posi(ox, oy):
 			max_dist = d
 			vec = [dx, dy]
 			sweep_start_pos = [ox[i], oy[i]]
-
+	
 	return vec, sweep_start_pos
 
+def polygonArea(X, Y, n): 
+  
+    # Initialze area 
+    area = 0.0
+  
+    # Calculate value of shoelace formula 
+    j = n - 1
+    for i in range(0,n): 
+        area += (X[j] + X[i]) * (Y[j] - Y[i]) 
+        j = i   # j is previous vertex to i 
+  
+    # Return absolute value 
+    return abs(area / 2.0)
+
+def perimeterArea(x,y):
+	perim = 0
+	for i in range(len(x)-1):
+		distBound = math.sqrt((math.pow((x[i+1]-x[i]),2)+(math.pow((y[i+1]-y[i]),2))))
+		perim += distBound
+	print("perim =",perim)
+	return perim
 
 def convert_grid_coordinate(ox, oy, sweep_vec, sweep_start_posi):
 	tx = [ix - sweep_start_posi[0] for ix in ox]
 	ty = [iy - sweep_start_posi[1] for iy in oy]
-
+	
 	th = math.atan2(sweep_vec[1], sweep_vec[0])
-
+	
 	c = np.cos(-th)
 	s = np.sin(-th)
 
 	rx = [ix * c - iy * s for (ix, iy) in zip(tx, ty)]
 	ry = [ix * s + iy * c for (ix, iy) in zip(tx, ty)]
+
+	area = polygonArea(rx,ry,len(rx))
 
 	return rx, ry
 
@@ -204,7 +236,7 @@ def convert_global_coordinate(x, y, sweep_vec, sweep_start_posi):
 def search_free_grid_index_at_edge_y(grid_map, from_upper=False):
 	yind = None
 	xinds = []
-
+	turn1 = 0
 	if from_upper:
 		xrange = range(grid_map.height)[::-1]
 		yrange = range(grid_map.width)[::-1]
@@ -217,6 +249,7 @@ def search_free_grid_index_at_edge_y(grid_map, from_upper=False):
 			if not grid_map.check_occupied_from_xy_index(ix, iy):
 				yind = iy
 				xinds.append(ix)
+
 		if yind:
 			break
 
@@ -241,7 +274,7 @@ def setup_grid_map(ox, oy, reso, sweep_direction, offset_grid=20):
 		xinds_goaly, goaly = search_free_grid_index_at_edge_y(grid_map, from_upper=True)
 	elif sweep_direction == SweepSearcher.SweepDirection.DOWN:
 		xinds_goaly, goaly = search_free_grid_index_at_edge_y(grid_map, from_upper=False)
-
+	
 	return grid_map, xinds_goaly, goaly
 
 def sweep_path_search(sweep_searcher, gmap, grid_search_animation=False):
@@ -253,6 +286,7 @@ def sweep_path_search(sweep_searcher, gmap, grid_search_animation=False):
 
 	x, y = gmap.calc_grid_central_xy_position_from_xy_index(cxind, cyind)
 	px, py = [x], [y]
+	#print(x,y)
 
 	if grid_search_animation:
 		fig, ax = plt.subplots()
@@ -276,11 +310,12 @@ def sweep_path_search(sweep_searcher, gmap, grid_search_animation=False):
 		gmap.set_value_from_xy_index(cxind, cyind, 0.5)
 
 		if grid_search_animation:
+			plt.figure(9)
+			plt.title("grid_map")
 			gmap.plot_grid_map(ax=ax)
 			plt.pause(1.0)
 
-	gmap.plot_grid_map()
-
+	#gmap.plot_grid_map()
 	return px, py
 
 def planning(ox, oy, reso,
@@ -299,39 +334,52 @@ def planning(ox, oy, reso,
 	px, py = sweep_path_search(sweep_searcher, gmap)
 
 	rx, ry = convert_global_coordinate(px, py, sweep_vec, sweep_start_posi)
-	rl = len(rx)
-	print("Path length:", rl)
+	print("Path length:", len(rx))
 
-	return rx, ry, rl
-
+	return rx, ry, turning
 
 def planning_animation(ox, oy, reso):  # pragma: no cover
-	px, py, pl = planning(ox, oy, reso)
+	px, py, numTurn = planning(ox, oy, reso)
+	#print(np.around(px),np.around(py))
+	pl = len(px)
+	numTurn = turning
 
+	plt.figure(1)
 	plt.cla()
-	plt.plot(ox, oy, "-xb")
-	plt.plot(px, py, "-r")
+	#ox.append(ox[0])
+	#oy.append(oy[0])
+	plt.title("final_result")
+	plt.plot(ox, oy, "-ob", linewidth=3, label="Boundary Point")
+	plt.plot(px, py, "-r", label="Path Result")
+	plt.plot(px[0], py[0], "ok", markersize=10, label="Start Pos")
+	plt.plot(px[len(px)-1], py[len(py)-1], "og", markersize=10, label="End Pos")
 	plt.axis("equal")
 	plt.grid(True)
+	plt.legend()
 	plt.pause(0.1)
+	#plt.show() #jgn lupa di komen
 
-	return px, py, pl
+	return px, py, pl, numTurn
 
-def simulate(poly):
+def simulate(corner, ox, oy):
 	obstacles = []
 	# initial state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
 	state = np.array([0, 0.2, np.pi/2, 0.0, 0.0])
-	traj = state[:2]
+	traj = [5, 5]#state[:2]
 	params = Params()
 	plt.figure(figsize=(10,10))
-
-	flight_area_vertices = poly
+	
+	#crn = corner
+	flight_area_vertices = corner
+	#flight_area_vertices = np.array([[-10, -10], [-3, -10], [-3, -4], [3, -4], [3, -10], [10,-10], [10,10], [-10,10]]) #corner
 
 	gridmap = gm(flight_area_vertices, state[:2])
 	
-	ox = flight_area_vertices[:,0].tolist() + [flight_area_vertices[0,0]]
-	oy = flight_area_vertices[:,1].tolist() + [flight_area_vertices[0,1]]
-
+	#ox = flight_area_vertices[:,0].tolist() + [flight_area_vertices[0,0]]
+	#oy = flight_area_vertices[:,1].tolist() + [flight_area_vertices[0,1]]
+	
+	#reso = params.sweep_resolution
+	#goal_x, goal_y = planning(ox, oy, reso)
 	goal_x = rx
 	goal_y = ry
 	# goal = [x, y], m
@@ -361,13 +409,17 @@ def simulate(poly):
 		
 		if params.animate:
 			plt.cla()
-			gridmap.draw_map(obstacles)
+			#gridmap.draw_map(obstacles)
 			plt.plot(goal_x, goal_y)
 			plt.plot(goal[0], goal[1], 'ro', markersize=10, label='Goal position', zorder=20)
+			ox.append(ox[0])
+			oy.append(oy[0])
+			plt.plot(ox, oy, "-xk", linewidth=3)
 			visualize(traj, state, params)
 			plt.pause(0.1)
 
 	print('Mission is complete!')
 	plt.plot(goal_x, goal_y)
+	plt.plot(ox, oy, "-xk", linewidth=3)
 	visualize(traj, state, params)
 	plt.show()

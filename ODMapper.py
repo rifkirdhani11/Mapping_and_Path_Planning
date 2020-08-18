@@ -6,6 +6,7 @@ from pyodm import Node, exceptions
 from tkinter import *
 from tkinter.ttk import Progressbar
 from tkinter import ttk, filedialog
+from ttkthemes import ThemedStyle 
 
 node = Node("192.168.99.100", 3000)
 
@@ -64,17 +65,20 @@ def progressUpDisplay():
     print(value)
 
 def attributeODM(window, tab1):
-    lbl1 = Label(tab1, text="Images and GCP (optional):  ")
+    style = ThemedStyle(tab1)
+    style.set_theme("vista")
+
+    lbl1 = ttk.Label(tab1, text="Images and GCP (optional):  ")
     lbl1.grid(row=0, sticky=W)#place(x=10, y=10)
-    lbl2 = Label(tab1, text="Project Name: ")
+    lbl2 = ttk.Label(tab1, text="Project Name: ")
     lbl2.grid(row=1, sticky=W)#place(x=10, y=37)
-    projName = Entry(tab1, width=20)
+    projName = ttk.Entry(tab1, width=20)
     projName.grid(row=2, sticky=W, padx=3)
     projNameIn = projName.get()
 
-    browse = Button(tab1, text="Add Files...", command=open_file)
+    browse = ttk.Button(tab1, text="Add Files...", command=open_file)
     browse.grid(row=0, column=1, sticky=W, pady=3)#place(x=220, y=10)
-    startODM = Button(tab1, text="Start Stich", command=create_task)
+    startODM = ttk.Button(tab1, text="Start Stich", command=create_task)
     startODM.grid(row=2, column=1, sticky=W, padx=5)#place(x=220, y=37)
 
 

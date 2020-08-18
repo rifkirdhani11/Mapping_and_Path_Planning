@@ -17,9 +17,9 @@ from matplotlib.patches import Polygon
 class GridMap:
     def __init__(self, polygon_vertices, point_inside_polygon=[0,0]):
         self.map_center = np.array([0.0, 0.0])
-        self.map_width_m = 5.0
-        self.map_length_m = 5.0
-        self.map_resolution_m = 0.01 # [m]
+        self.map_width_m = 50.0
+        self.map_length_m = 50.0
+        self.map_resolution_m = 5 # [m]
         self.flight_area_vertices = polygon_vertices
         
         self.create_borders_grid_map(point_inside_polygon)
@@ -33,6 +33,8 @@ class GridMap:
         points.append(points[0])
         for i in range(len(points)-1):
             line = bresenham(points[i], points[i+1])
+            print("line")
+            print(line)
             for l in line:
                 gmap[l[1]][l[0]] = 0
         polygon_center_grid = np.array( self.meters2grid(polygon_center), dtype=int )
