@@ -5,8 +5,8 @@ ROBOTANI : Planting Path Planning and Mapping System Software is a software syst
 <p align="center">
   <img src="Update_Gambaran_Keseluruhan.png" width="350" title="hover text">
   <img src="Blok Diagram ROBOTANI v2.png" width="350" alt="accessibility text">
-  <img src="auto.jpg" width="350" alt="accessibility text">
-  <img src="manual.jpg" width="350" alt="accessibility text">
+  <img src="auto.JPG" width="350" alt="accessibility text">
+  <img src="Manual.JPG" width="350" alt="accessibility text">
 </p>
 
 ## Software Requirements
